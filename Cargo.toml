@@ -1,0 +1,8 @@
+[package]
+name = "cid"
+version = "0.1.0"
+authors = ["Hiromitsu Oshiba <h.oshiba.0117@gmail.com>"]
+
+[dependencies]
+rust-crypto = "0.2.36"
+tempify = { git = "https://github.com/0x75960/tempify-rs", branch = "master" }
