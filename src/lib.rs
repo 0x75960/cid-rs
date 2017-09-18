@@ -17,7 +17,7 @@ pub struct ContentIdentifier {
 }
 
 impl ContentIdentifier {
-    
+
     /// calculate hash sum of file
     pub fn of_file(filepath: &str) -> Result<ContentIdentifier, String> {
         let mut file: File;
@@ -67,7 +67,11 @@ impl ContentIdentifier {
 mod test {
 
     extern crate tempify;
+
     use super::*;
+    use std::fs::File;
+    use std::io::prelude::*;
+
     use self::tempify::Temp;
 
     #[test]
