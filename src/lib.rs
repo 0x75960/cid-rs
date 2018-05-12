@@ -1,12 +1,13 @@
 extern crate crypto;
 
 use std::fs::File;
+use std::io::Result;
 use std::io::prelude::*;
 
 use self::crypto::digest::Digest;
+use self::crypto::md5::Md5;
 use self::crypto::sha1::Sha1;
 use self::crypto::sha2::Sha256;
-use self::crypto::md5::Md5;
 
 /// calculate hash sum at once
 #[derive(Debug, Clone)]
@@ -17,14 +18,9 @@ pub struct ContentIdentifier {
 }
 
 impl ContentIdentifier {
-
     /// calculate hash sum of file
-    pub fn of_file(filepath: &str) -> Result<ContentIdentifier, String> {
-        let mut file: File;
-        match File::open(filepath) {
-            Ok(f) => file = f,
-            Err(e) => return Err(e.to_string()),
-        }
+    pub fn of_file<S: AsRef<str>>(filepath: S) -> Result<ContentIdentifier> {
+        let mut file = File::open(filepath.as_ref())?;
 
         let mut sha256er = Sha256::new();
         let mut sha1er = Sha1::new();
@@ -46,14 +42,14 @@ impl ContentIdentifier {
     }
 
     /// calculate ContentIdentifiersum of string
-    pub fn of_str(string: &str) -> ContentIdentifier {
+    pub fn of_str<S: AsRef<str>>(content: S) -> ContentIdentifier {
         let mut sha256er = Sha256::new();
         let mut sha1er = Sha1::new();
         let mut md5er = Md5::new();
 
-        sha256er.input_str(string);
-        sha1er.input_str(string);
-        md5er.input_str(string);
+        sha256er.input_str(content.as_ref());
+        sha1er.input_str(content.as_ref());
+        md5er.input_str(content.as_ref());
 
         ContentIdentifier {
             sha256: sha256er.result_str(),
@@ -70,7 +66,6 @@ mod test {
 
     use super::*;
     use std::fs::File;
-    use std::io::prelude::*;
 
     use self::tempify::Temp;
 
@@ -89,25 +84,20 @@ mod test {
     fn file_fid_test() {
         let tmp = Temp::new().unwrap();
 
-        test_write(tmp.path.as_str());
-        let cid: ContentIdentifier;
-
-        match ContentIdentifier::of_file(tmp.path.as_str()) {
-            Ok(h) => cid = h,
-            Err(e) => panic!(e.to_string()),
+        {
+            let mut file = File::create(tmp.path.as_str()).unwrap();
+            let _ = file.write_all(b"Hello");
         }
+
+        let cid = ContentIdentifier::of_file(tmp.path.as_str()).unwrap();
 
         assert_eq!(
             cid.sha256,
             "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969"
         );
+
         assert_eq!(cid.sha1, "f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0");
         assert_eq!(cid.md5, "8b1a9953c4611296a827abf8c47804d7");
-    }
-
-    fn test_write(path: &str) {
-        let mut file = File::create(path).unwrap();
-        let _ = file.write_all(b"Hello");
     }
 
 }
